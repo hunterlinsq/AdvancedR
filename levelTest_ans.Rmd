@@ -42,7 +42,12 @@ findNum(y,1,2)
 raw <- read.delim("~/R/weather.txt",check.names = F, na.strings = ".")
 library(data.table)
 raw <- data.table(raw)
-raw[,lapply(.SD[,-c(1:2)],function(x){x[1]-x[2]}),by=month]
+diff <- raw[,lapply(.SD[,-c(1:2)],function(x){x[1]-x[2]}),by=month]
+
+#以下是新加的转化
+diff_temp <- na.omit(melt(diff,measure.vars = colnames(diff)[-1],variable.name = "day",value.name = "diff_temp"))
+setorder(diff_temp,month,day)
+diff_temp
 ```
 
 ##第3题
@@ -51,6 +56,7 @@ raw[,lapply(.SD[,-c(1:2)],function(x){x[1]-x[2]}),by=month]
 
 时间：5 min
 
+原本理解：各个航空公司的延误时间的每个月在10%分位数上的均值。
 ```{r}
 library(hflights)
 dat <- data.table(hflights)
@@ -58,6 +64,35 @@ dat1<- dat[,.(delay=quantile(na.omit(ArrDelay),0.1)),by=.(Year,Month,UniqueCarri
 dat1[,.(meandelay=mean(delay)),by=UniqueCarrier]
 ```
 
+各航空公司的每个月的延误时间在每个十分位上的均值。
+
+时间：10 min
+```{r}
+library(hflights)
+library(data.table)
+dat <- data.table(hflights)
+dat <- na.omit(dat[,.(Year,Month,UniqueCarrier,ArrDelay)])
+dat_qua <- dat[,quan:=findInterval(ArrDelay,quantile(ArrDelay,seq(0,1,0.1)),rightmost.closed = TRUE),
+            by=.(UniqueCarrier,Year,Month)]
+dat_qua <- setorder(dat_qua,UniqueCarrier,Year,Month,quan)
+dat_delay<- dat_qua[,.(meandelay=mean(ArrDelay)),by=.(UniqueCarrier,Year,Month,quan)]
+head(dat_delay)
+```
 
 
+
+参考答案
+```{r}
+library(dplyr)
+library(hflights)
+
+rs<-na.omit(hflights) %>% 
+  select(UniqueCarrier,Year,Month,ArrDelay) %>%
+  group_by(UniqueCarrier,Year,Month) %>%
+  mutate(quan=findInterval(ArrDelay,quantile(ArrDelay,seq(0,1,0.1)),rightmost.closed = TRUE)) %>% 
+  group_by(UniqueCarrier,Year,Month,quan) %>%
+  summarise(avgQuan=mean(ArrDelay,na.rm=T))
+
+head(rs)
+```
 
