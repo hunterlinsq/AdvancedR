@@ -1,0 +1,63 @@
+
+---
+title: "levelTest_ans"
+author: "linsq"
+date: "2017年3月7日"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+    includes:
+          in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##第1题
+
+编写一个函数findNum(y,l)计算在y向量中数字1连续出现l次的位置
+时间：5 min
+
+```{r}
+y<- c(1,0,0,1,1,1,0,1,1)
+findNum <- function(y,x,l){
+        Num <- NULL
+        for(i in 1:(length(y)-l+1)){
+                if(all(y[i:(i+l-1)]==x)){
+                        Num <- c(Num,i)
+                }
+        }
+        return(Num)
+}
+findNum(y,1,2)
+```
+
+##第2题
+
+计算每天最低气温和最高气温的差值
+时间：7min
+
+```{r}
+raw <- read.delim("~/R/weather.txt",check.names = F, na.strings = ".")
+library(data.table)
+raw <- data.table(raw)
+raw[,lapply(.SD[,-c(1:2)],function(x){x[1]-x[2]}),by=month]
+```
+
+##第3题
+
+测试：计算每个航空公司(UniqueCarrier)每个月到达延误时间(ArrDelay)的十分位(quantile)的均值
+
+时间：5 min
+
+```{r}
+library(hflights)
+dat <- data.table(hflights)
+dat1<- dat[,.(delay=quantile(na.omit(ArrDelay),0.1)),by=.(Year,Month,UniqueCarrier)]
+dat1[,.(meandelay=mean(delay)),by=UniqueCarrier]
+```
+
+
+
+
