@@ -27,14 +27,18 @@ ds<-data.frame(id=seq(10,80,by=10),
                end=c("11:00","13:00","15:30","13:30","11:30","13:30","14:30","19:00"))
 ds
 
+```
 
+
+基本思路：对于某个资产，由于题目的时间是factor，将其start和end合并在一起经过一系列转化成类似区间这样的形式，对于这样得到每一个端点，比如1，再加上0.5，此时1.5代表区间（1，2），看其是否落在每一个id的区间里面(利用dplyr::between),返回TRUE说明该ID经过该时间段，这样如此反复，返回TRUE最多的X+0.5就代表dow在该时间段上出现的次数最多，最后再反过来再找到X对应的ID。
+```{r}
 library(data.table)
 overlap <- function(asset,data){
         data <- data.table(data)
         data_asset <- data[anest==asset,]
         #data_asset <- data[anest=="dow",]
         level <- as.numeric(as.factor(c(as.character(data_asset$start),as.character(data_asset$end))))  #将时间排序
-        data_asset <- data_asset[,.(id,start1=level[1:(length(level)/2)],end1=level[-c(1:(length(level)/2))])] 
+        data_asset <- data_asset[,.(id,start1=level[1:(length(level)/2)],end1=level[-c(1:(length(level)/2))])] #类似区间形式
         m <- length(unique(level))
         for(i in 1:m){
         dasset <- data_asset[,paste("V",i+0.5,sep = ""):=dplyr::between(i+0.5,start1,end1),by=id]
