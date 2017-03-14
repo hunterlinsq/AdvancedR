@@ -38,7 +38,7 @@ overlap <- function(asset,data){
         m <- length(unique(level))
         for(i in 1:m){
         dasset <- data_asset[,paste("V",i+0.5,sep = ""):=dplyr::between(i+0.5,start1,end1),by=id]
-        } #各区间的有没有出现在样本上
+        } #各区间有没有出现在样本上
         name <- colnames(dasset)
         nums <- dasset[,lapply(.SD[,which(name=="V1.5"):which(name==paste("V",m+0.5,sep = ""))],sum)] #各个区间上的重叠数
         max_inter <- colnames(nums)[which(nums==max(nums))]  #最大重叠数对应的区间
