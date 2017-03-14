@@ -1,0 +1,197 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Advanced R 研讨},
+            pdfauthor={罗智超Rokia.org},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{Advanced R 研讨}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+\subtitle{第一章 简介}
+  \author{罗智超Rokia.org}
+  \preauthor{\centering\large\emph}
+  \postauthor{\par}
+  \date{}
+  \predate{}\postdate{}
+
+\usepackage{xeCJK}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{github地址}\label{github}
+
+\url{https://github.com/zhichaoluo/AdvancedR/blob/master/chapter01.Rmd}
+
+\section{前言}
+
+感谢R语言社区，让我发现人世间居然有件兵器可以给自己终身修炼的动力，实乃人生幸事。AdvancedR就是我在练功过程中无意中发现的一本《易筋经》。爱不释手，字字珠玑。
+
+市面上大部分有关R语言的书主要分为三类，一类是偏基础，一类偏概率统计（含数据挖掘、统计学习），另外一类是偏编程的。前面两类的汗牛充栋数量太大，就不推荐了。
+
+\begin{itemize}
+\item
+  最后一类的首推Hadley Wickham写的这本《Advanced R》；
+\item
+  第二本是John M. Chamber的 《Software for Data Analysis》,R
+  语言的前生S语言就是Chamber大大开发的，你说他的书能不看么？Chamber大大2016年新出的《ExtendingR》也是\textbf{强烈推荐}，书中详细介绍了R语言的底层技术，包括函数编程、面向对象编程以及扩展方面的内容，其中专门有一章介绍了R语言的前世今生。其实Chamber大大还有两本书非常有名，1988年的《The
+  New S Language》(江湖人称the blue book)，1991年的《Statistical Methods
+  in S》(江湖人称the white book)；
+\item
+  第三本是Norman Matloff的《the Art of R
+  programming》,Matloff教授拿到的是统计学博士却在计算机系教书，计算机功底杠杠的，看他的书，你会发现他不会放过任何一个角落来优化每一段代码。Matloff还擅长并行计算研究，他还出版了一本《Parrallel
+  Computing for data science, with example in R, C++ and CUDA》
+\item
+  第四本是Patrick Burns的《R Inferno》,教你如何绕坑而不掉进坑里。
+\item
+  最权威R官方资料网站：\url{http://cran.r-project.org/doc/manuals/}
+\end{itemize}
+
+为什么只推荐偏编程的书呢？个人感觉，无论哪种软件都是你手中的一件兵器，无论哪种兵器，你只有熟练掌握它，它才能为你所用，学习R语言如果不将底层的编程弄明白，就像练功不懂内功心法，也就只有依葫芦画瓢，摆摆架势了。另外，底层编程熟练后，在此基础上将新研究的统计模型、方法应用在业务领域更是一马平川。（预告：下个研讨内容An
+Introduction to Statistical Learning: with Application in R）
+
+一直很反感充斥在市面上的一堆什么七天学会xx功夫的书籍，其实也不能怪这些书籍，练功者自己内心急躁，急功近利，自然会选择这样的书籍，有了需求，自然就有了供给。现在的小孩估计不看武侠小说，只打网游。我现在仍然清晰记得小李飞刀李寻欢\textbf{永不离手}的那把破旧的雕刻刀，虽然破旧平凡，但在百晓生兵器谱中排名第三。
+
+``小李飞刀，例不虚发。刀光一闪，小李飞刀已发出，刀已插入他的咽喉，他瞪大眼睛，至死也不相信，没有人看清小李飞刀是如何出手的！''
+
+古人云，天将降大任，必先冻心忍性。让我们用一学期的时间来好好研读《Advanced
+R》，打造我们手中的``小李飞刀''。
+
+\section{目标读者}
+
+\begin{itemize}
+\item
+  想深入学习R并学习解决各种问题的新策略的中级R程序员
+\item
+  正在学习R，并想知道R为什么这样工作的其他语言的程序员
+\end{itemize}
+
+\section{可以学到什么？}
+
+\begin{itemize}
+\item
+  熟悉R的基础
+\item
+  理解函数式编程
+\item
+  掌握元编程
+\item
+  性能优化
+\item
+  理解大多数R代码
+\end{itemize}
+
+\section{推荐阅读}
+
+\begin{itemize}
+\item
+  《The Structure and Interpretation of Computer Programs》(SICP) by
+  Harold Abelson, Gerald Jay Sussman
+\item
+  《Concepts, Techniques and Models of Computer Programming》 by Peter
+  van Roy, Sef Haridi
+\item
+  《The Pragmatic Programmer》by Andrew Hunt, David Thomas
+\end{itemize}
+
+\section{获取帮助}
+
+\begin{itemize}
+\item
+  \url{http://stackoverflow.com}
+\item
+  \url{http://github.com/hadley/adv-r}
+\item
+  研讨组地址：\url{http://github.com/zhichaoluo/AdvancedR}
+\end{itemize}
+
+\section{研讨组规则}
+
+\begin{itemize}
+\item
+  三人行，必有我师
+\item
+  集体学习，集体讨论
+\item
+  欢迎提问，没有问题就有问题
+\item
+  必须参与练习，否则没有共鸣。
+\item
+  三次没有提交作业自动退出研讨组
+\end{itemize}
+
+
+\end{document}
