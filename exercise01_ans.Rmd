@@ -51,8 +51,8 @@ overlap <- function(asset,data){
         result$number <- max(nums)
         dasset2 <- data.frame(dasset)
         for(j in 1:length(max_where)){
-                k <- max_where[j]
-                #result$id <- rbind(result$id,dasset[which(dasset[,k]==TRUE),id])  #此处会出错，data.table似乎无法识别k
+                #result$id <- rbind(result$id,dasset[which(dasset[,max_where[j]]==TRUE),id]) 
+                #用data.table此处会出错，data.table似乎无法识别max_where[j]
                 result$id <- rbind(result$id,dasset2[which(dasset2[,max_where[j]]==TRUE),]$id)
                 }
         result
