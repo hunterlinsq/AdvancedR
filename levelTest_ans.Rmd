@@ -1,4 +1,3 @@
-
 ---
 title: "levelTest_ans"
 author: "linsq"
@@ -42,11 +41,13 @@ findNum(y,1,2)
 raw <- read.delim("~/R/weather.txt",check.names = F, na.strings = ".")
 library(data.table)
 raw <- data.table(raw)
-diff <- raw[,lapply(.SD[,-c(1:2)],function(x){x[1]-x[2]}),by=month]
+#diff <- raw[,lapply(.SD[,-c(1:2)],function(x){x[1]-x[2]}),by=month]
+diff <- raw[,lapply(.SD[,-c("element")],function(x){x[1]-x[2]}),by=.(year,month)]
+diff
 
 #以下是新加的转化
 diff_temp <- na.omit(melt(diff,measure.vars = colnames(diff)[-1],variable.name = "day",value.name = "diff_temp"))
-setorder(diff_temp,month,day)
+setorder(diff_temp,year,month,day)
 diff_temp
 ```
 
@@ -61,12 +62,13 @@ diff_temp
 library(hflights)
 dat <- data.table(hflights)
 dat1<- dat[,.(delay=quantile(na.omit(ArrDelay),0.1)),by=.(Year,Month,UniqueCarrier)]
+#dat1<- dat[,.(quantile(na.omit(ArrDelay),seq(0,1,0.1))),by=.(Year,Month,UniqueCarrier)]
 dat1[,.(meandelay=mean(delay)),by=UniqueCarrier]
 ```
 
 各航空公司的每个月的延误时间在每个十分位上的均值。
 
-时间：10 min
+时间：15 min
 ```{r}
 library(hflights)
 library(data.table)
@@ -77,8 +79,14 @@ dat_qua <- dat[,quan:=findInterval(ArrDelay,quantile(ArrDelay,seq(0,1,0.1)),righ
 dat_qua <- setorder(dat_qua,UniqueCarrier,Year,Month,quan)
 dat_delay<- dat_qua[,.(meandelay=mean(ArrDelay)),by=.(UniqueCarrier,Year,Month,quan)]
 head(dat_delay)
+
+dat_qua2 <- dat[,quan:=f1(ArrDelay),by=.(UniqueCarrier,Year,Month)]
+dat_qua2 <- setorder(dat_qua2,UniqueCarrier,Year,Month,quan)
+dat_delay2<- dat_qua2[,.(meandelay=mean(ArrDelay)),by=.(UniqueCarrier,Year,Month,quan)]
+head(dat_delay2)
 ```
 
+tapply:多个分组
 
 
 参考答案
@@ -89,10 +97,34 @@ library(hflights)
 rs<-na.omit(hflights) %>% 
   select(UniqueCarrier,Year,Month,ArrDelay) %>%
   group_by(UniqueCarrier,Year,Month) %>%
-  mutate(quan=findInterval(ArrDelay,quantile(ArrDelay,seq(0,1,0.1)),rightmost.closed = TRUE)) %>% 
+  mutate(quan=findInterval(ArrDelay,quantile(ArrDelay,seq(0,1,0.1)),da)) %>% 
   group_by(UniqueCarrier,Year,Month,quan) %>%
   summarise(avgQuan=mean(ArrDelay,na.rm=T))
 
 head(rs)
+```
+summaries:添加新列
+mutate:对每一行都要计算
+不用包再做一遍
+
+```{r}
+x <- rnorm(100)
+
+f1 <- function(x){
+        inter <- rep(NA,length(x))
+        quan <- quantile(x,seq(0,1,0.1))
+        inter[which.min(x)] <- 1
+        for(i in 1:length(x)){
+                for(j in 1:10){
+                        if(x[i]>quan[j] & x[i]<=quan[j+1]){
+                                inter[i] <- j
+                        }#else{j = j+1}
+                }
+        }
+        inter
+}
+a1 <- f1(x)
+
+a2 <- findInterval(x,quantile(x,seq(0,1,0.1)),rightmost.closed = TRUE)
 ```
 
