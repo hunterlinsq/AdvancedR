@@ -30,15 +30,18 @@ ds
 ```
 
 
+##solution1
 基本思路：对于某个资产，由于题目的时间是factor，将其start和end合并在一起经过一系列转化成类似区间这样的形式，对于这样得到每一个端点，比如1，再加上0.5，此时1.5代表区间（1，2），看其是否落在每一个id的区间里面(利用dplyr::between),返回TRUE说明该ID经过该时间段，这样如此反复，返回TRUE最多的X+0.5就代表dow在该时间段上出现的次数最多，最后再反过来再找到X+0.5都为TRUE对应的ID们。
 ```{r}
 library(data.table)
 overlap <- function(asset,data){
         data <- data.table(data)
         data_asset <- data[anest==asset,]
-        #data_asset <- data[anest=="dow",]
-        level <- as.numeric(as.factor(c(as.character(data_asset$start),as.character(data_asset$end))))  #将时间排序
-        data_asset <- data_asset[,.(id,start1=level[1:(length(level)/2)],end1=level[-c(1:(length(level)/2))])] #类似区间形式
+        data_asset <- data[anest=="dow",]
+        level <- as.numeric(as.factor(c(as.character(data_asset$start),
+                                        as.character(data_asset$end))))  #将时间排序
+        data_asset <- data_asset[,.(id,start1=level[1:(length(level)/2)],
+                                    end1=level[-c(1:(length(level)/2))])] #类似区间形式
         m <- length(unique(level))
         for(i in 1:m){
         dasset <- data_asset[,paste("V",i+0.5,sep = ""):=dplyr::between(i+0.5,start1,end1),by=id]
@@ -51,8 +54,6 @@ overlap <- function(asset,data){
         result$number <- max(nums)
         dasset2 <- data.frame(dasset)
         for(j in 1:length(max_where)){
-                #result$id <- rbind(result$id,dasset[which(dasset[,max_where[j]]==TRUE),id]) 
-                #用data.table此处会出错，data.table似乎无法识别max_where[j]
                 result$id <- rbind(result$id,dasset2[which(dasset2[,max_where[j]]==TRUE),]$id)
                 }
         result
@@ -63,6 +64,84 @@ overlap(asset = "baker",data = ds)
 
 library(microbenchmark)
 microbenchmark(overlap(asset = "dow",data = ds))
+
+
+Rprof("a.out")
+a <- overlap(asset = "dow",data = ds)
+Rprof(NULL)
+summaryRprof("a.out")
+```
+
+
+改进版
+```{r}
+overlap_n <- function(asset,data){
+        d_a <- data[data$anest==asset,]
+        d_a <- data[data$anest=="dow",]
+        level <- as.numeric(as.factor(c(as.character(d_a$start),
+                                        as.character(d_a$end))))  #将时间排序
+        d_a$start=level[1:(length(level)/2)]
+        d_a$end=level[-c(1:(length(level)/2))] 
+        
+        inter <- data.frame()
+        for(i in 1:length(d_a$start)){
+                for(j in 1:length(unique(level))){
+                        inter[i,j] <- dplyr::between(j+0.5,d_a$start[i],d_a$end[i])
+                }
+        }
+        
+        result <- list("max_number"=NA,"id"=list())
+        result$max_number <- max(apply(inter,2,sum))
+        max_where<- which(apply(inter,2,sum)==result$max_number)
+        for(i in 1:length(max_where)){
+                result$id[[i]] <- d_a$id[inter[,max_where[i]]]
+                }
+        result
+}
+overlap_n(asset = "dow",data = ds)
+microbenchmark(overlap_n(asset = "dow",data = ds))
+```
+
+
+##solution2
+
+```{r}
+
+over <- function(x1,x2,y1,y2){
+        ifelse(max(x1,y1)<min(x2,y2),return(TRUE),return(FALSE))
+}
+
+overlap2 <- function(asset,data){
+        d_a <- data[data$anest==asset,]
+        d_a$start<- (as.POSIXct(d_a$start,format="%H:%M"))
+        d_a$end<- (as.POSIXct(d_a$end,format="%H:%M"))
+        level <- unique(sort(c(d_a$start,d_a$end)))
+        
+        inter <- data.frame()
+        for(i in 1:length(d_a$start)){
+                for(j in 1:(length(level)-1)){
+                        inter[i,j] <- over(d_a$start[i],d_a$end[i],level[j],level[j+1])
+                }
+        }
+        
+        result <- list("max_number"=NA,"id"=list())
+        result$max_number <- max(apply(inter,2,sum))
+        max_where<- which(apply(inter,2,sum)==result$max_number)
+        for(i in 1:length(max_where)){
+                result$id[[i]] <- d_a$id[inter[,max_where[i]]]
+                }
+        result
+        
+}
+
+overlap2(asset = "dow",data = ds)
+
+microbenchmark(overlap2(asset = "dow",data = ds))
+
+Rprof("a.out")
+a <- overlap2(asset = "dow",data = ds)
+Rprof(NULL)
+summaryRprof("a.out")
 
 ```
 
