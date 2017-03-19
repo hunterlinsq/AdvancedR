@@ -84,7 +84,7 @@ overlap_n <- function(asset,data){
         d_a$end=level[-c(1:(length(level)/2))] 
         
         inter <- data.frame()
-        for(i in 1:length(d_a$start)){
+        for(i in 1:nrow(d_a)){
                 for(j in 1:length(unique(level))){
                         inter[i,j] <- dplyr::between(j+0.5,d_a$start[i],d_a$end[i])
                 }
@@ -113,12 +113,12 @@ over <- function(x1,x2,y1,y2){
 
 overlap2 <- function(asset,data){
         d_a <- data[data$anest==asset,]
-        d_a$start<- (as.POSIXct(d_a$start,format="%H:%M"))
-        d_a$end<- (as.POSIXct(d_a$end,format="%H:%M"))
+        d_a$start<- as.POSIXct(d_a$start,format="%H:%M")
+        d_a$end<- as.POSIXct(d_a$end,format="%H:%M")
         level <- unique(sort(c(d_a$start,d_a$end)))
         
         inter <- data.frame()
-        for(i in 1:length(d_a$start)){
+        for(i in 1:nrow(d_a)){
                 for(j in 1:(length(level)-1)){
                         inter[i,j] <- over(d_a$start[i],d_a$end[i],level[j],level[j+1])
                 }
@@ -131,7 +131,6 @@ overlap2 <- function(asset,data){
                 result$id[[i]] <- d_a$id[inter[,max_where[i]]]
                 }
         result
-        
 }
 
 overlap2(asset = "dow",data = ds)
@@ -142,6 +141,35 @@ Rprof("a.out")
 a <- overlap2(asset = "dow",data = ds)
 Rprof(NULL)
 summaryRprof("a.out")
+
+```
+
+
+泽贤的强无敌算法
+```{r}
+solution3 <- function(asset,data){
+        d_a <- data[data$anest==asset,]
+        d_a$start<- as.POSIXct(d_a$start,format="%H:%M")
+        d_a$end<- as.POSIXct(d_a$end,format="%H:%M")
+        
+        n <- nrow(d_a)
+        f1 <- function(x){
+                if(max(d_a[x,]$start) < min(d_a[x,]$end)){
+                        d_a[x,"id"]
+                }
+        }
+        
+        for( k in n:2){
+                index <- combn(n, k, simplify = F)
+                res <- Filter(Negate(is.null),lapply(index, f1))
+                if(length(res)!=0){
+                        result <- list("max_number"=length(res[[1]]),"id"=res)
+                        return(result)
+                }
+        }
+}
+solution3(asset = "dow",data = ds)
+microbenchmark(solution3(asset = "dow",data = ds))
 
 ```
 
