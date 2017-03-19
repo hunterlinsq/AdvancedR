@@ -37,7 +37,6 @@ library(data.table)
 overlap <- function(asset,data){
         data <- data.table(data)
         data_asset <- data[anest==asset,]
-        data_asset <- data[anest=="dow",]
         level <- as.numeric(as.factor(c(as.character(data_asset$start),
                                         as.character(data_asset$end))))  #将时间排序
         data_asset <- data_asset[,.(id,start1=level[1:(length(level)/2)],
