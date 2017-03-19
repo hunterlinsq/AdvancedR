@@ -76,7 +76,6 @@ summaryRprof("a.out")
 ```{r}
 overlap_n <- function(asset,data){
         d_a <- data[data$anest==asset,]
-        d_a <- data[data$anest=="dow",]
         level <- as.numeric(as.factor(c(as.character(d_a$start),
                                         as.character(d_a$end))))  #将时间排序
         d_a$start=level[1:(length(level)/2)]
