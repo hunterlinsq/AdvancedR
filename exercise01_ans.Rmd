@@ -98,6 +98,7 @@ overlap_n <- function(asset,data){
 }
 overlap_n(asset = "dow",data = ds)
 microbenchmark(overlap_n(asset = "dow",data = ds))
+
 ```
 
 
@@ -125,15 +126,13 @@ overlap2 <- function(asset,data){
         result <- list("max_number"=NA,"id"=list())
         result$max_number <- max(apply(inter,2,sum))
         max_where<- which(apply(inter,2,sum)==result$max_number)
-        for(i in 1:length(max_where)){
-                result$id[[i]] <- d_a$id[inter[,max_where[i]]]
-                }
+        for(i in 1:length(max_where)){result$id[[i]] <- d_a$id[inter[,max_where[i]]]}
         result
 }
 
 overlap2(asset = "dow",data = ds)
 
-microbenchmark(overlap2(asset = "dow",data = ds))
+microbenchmark(overlap2(asset = "dow",data = ds),times = 1000L)
 
 Rprof("a.out")
 a <- overlap2(asset = "dow",data = ds)
@@ -141,6 +140,33 @@ Rprof(NULL)
 summaryRprof("a.out")
 
 ```
+
+改进简化版
+```{r}
+overlap2_n <- function(asset,data){
+        d_a <- data[data$anest==asset,]
+        d_a$start<- as.POSIXct(d_a$start,format="%H:%M")
+        d_a$end<- as.POSIXct(d_a$end,format="%H:%M")
+        level <- unique(sort(c(d_a$start,d_a$end)))
+        
+        inter <- data.frame(row.names = d_a$id)
+        for(i in 1:nrow(d_a)){
+                for(j in 1:(length(level)-1)){
+                        inter[i,j] <- over(d_a$start[i],d_a$end[i],level[j],level[j+1])
+                }
+        }
+        
+        max_number <- max(apply(inter,2,sum))
+        res<- inter[,which(apply(inter,2,sum)==max_number)]
+        return(list("max_number"=max_number,"id"=lapply(res,function(x){row.names(res)[x]})))
+}
+
+
+overlap2_n(asset = "dow",data = ds)
+library(microbenchmark)
+microbenchmark(overlap2_n(asset = "dow",data = ds),times = 1000L)
+```
+
 
 
 泽贤的强无敌算法
