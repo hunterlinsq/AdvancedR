@@ -42,7 +42,9 @@ nd | Array
 
 - 列表 数据框
 
+-向量(原子向量) 矩阵(带有维度的向量) 数组
 
+-列表(也是向量)  数据框(本质上也是向量)
 # 向量
 
 - 向量有两种形式：原子向量(Atomic Vector 所有元素类型都一样)和列表(List)，有三个共同属性typeof, length, attributes可以使用unlist()把list转成原子向量。
@@ -93,11 +95,14 @@ is.recursive(x)
 
 #c()强制将向量转换成list
 x<-c(list(1,2),c(3,4))
+x
 y<-list(list(1,2),c(3,4))
+y
 str(x)
 str(y)
 
-#
+
+library(rlist)
 is.list()
 as.list()
 unlist()
@@ -123,6 +128,7 @@ c(1,NA)
 
 # 属性
 
+在R中任何对象都有属性
 - 所有对象都可以通过任意附加的属性来存储对象的元数据。可以通过att()单独访问对象的每一个属性，也可以使用attributes()同时访问所有的属性。
 
 - 一般情况下，向量被修改后它的大多数属性都会丢失。但是3个最重要的属性不会丢失 name dimention class,对应的获取函数 names(),dim(),class()
@@ -134,18 +140,23 @@ attr(y,"my nickname")
 str(attributes(y))
 ```
 
+?model.matrix:将因子转为dummy，加属性的matrix
+?model.frame
+
 
 - 属性的一个重要应用就是因子。因子只能包含预先定义值的向量，常用于存储分类数据。因子看起来像字符型，但实际建立在整型向量的基础之上，它有两个属性：class(), levels()
 
 ```{r}
 x<-factor(c("a","b","c","a"))
+?gl   #产生因子水平
 class(x)
 levels(x)
+#或许可以用attribute加level
 #不能使用不在因子列表里面的因子，不能合并因子
 read.csv(,na.strings = "")
 read.csv(stringsAsFactors = F)
 data.frame(stringsAsFactors = F)
-
+#避免将数组转成因子
 ```
 
 
@@ -173,8 +184,8 @@ df<-data.frame(x=1:3,y=c("a","b","c"),stringsAsFactors = F)
 
 - data.frame是S3类，所以他的类型反映了构建它的基础向量：列表。
 ```{r}
-typeof(df)
-class(df)
+typeof(df) #list
+class(df)  #data.frame
 ```
 
 - 合并数据框
@@ -183,8 +194,11 @@ class(df)
 x<-cbind(df,1:3)
 class(x)
 rbind()
-
+cbind()
 ```
+
+**下载r-source**看源代码
+wiki
 
 - data.frame的列可以包含list
 
@@ -193,9 +207,9 @@ df<-data.frame(x=1:3)
 df$y<-list(1:2,1:3,1:4)
 
 #Error 会将列表中的每个元素都放入自己的列中，如果长度一样，不报错
-data.frame(x=1:3,y=list(1:2,1:3,1:4))
+data.frame(x=1:3,y=list(1:2,1:3,1:4)) #此时会报错
 #I()使data.frame()把列表看作一个单元
-data.frame(x=1:3,y=I(list(1:2,1:3,1:4)))
+m <- data.frame(x=1:3,y=I(list(1:2,1:3,1:4)))
 
 ```
 
