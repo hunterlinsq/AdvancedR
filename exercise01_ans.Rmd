@@ -76,6 +76,7 @@ summaryRprof("a.out")
 ```{r}
 overlap_n <- function(asset,data){
         d_a <- data[data$anest==asset,]
+        #d_a <- data[data$anest=="dow",]
         level <- as.numeric(as.factor(c(as.character(d_a$start),
                                         as.character(d_a$end))))  #将时间排序
         d_a$start=level[1:(length(level)/2)]
@@ -169,7 +170,7 @@ microbenchmark(overlap2_n(asset = "dow",data = ds),times = 1000L)
 
 
 
-泽贤的强无敌算法
+泽贤的算法
 ```{r}
 solution3 <- function(asset,data){
         d_a <- data[data$anest==asset,]
@@ -196,4 +197,10 @@ solution3(asset = "dow",data = ds)
 microbenchmark(solution3(asset = "dow",data = ds))
 
 ```
+改进：用二分法改进
+
+##solution4
+转化位类似00011100
+map:类似lapply，但可以同时传递两个参数
+reduse函数
 
