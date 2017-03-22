@@ -70,7 +70,18 @@ a <- overlap(asset = "dow",data = ds)
 Rprof(NULL)
 summaryRprof("a.out")
 ```
-
+算法：
+1. 将所有时间点放在一起并排序成1,2,...,m
+2. 看上面各个区间(用中值表示)有无落在各ID的时间段上
+    for ith ID from 1st to nth               
+       for j from 1 to m            
+            if j+0.5 在 start 和 end之间
+                then inter(i,j) = TRUE
+                else inter(i,j) = FALSE
+3. 将各ID的分布情况加总得到各区间的重叠情况             
+    res_j = $\Sigma_i$inter(i,j)
+4. 最大重叠数max_number=max{res_j} 和对应的值a+0.5
+5. 找出在a+0.5上返回TRUE的ID
 
 改进版
 ```{r}
@@ -104,6 +115,19 @@ microbenchmark(overlap_n(asset = "dow",data = ds))
 
 
 ##solution2
+
+算法：
+1. 将所有时间点放在一起并排序切割成各区间(a_1,a_2),(a_2,a_3),....(a_m-1,a_m)
+2. 看上面各个区间(用中值表示)有无落在各ID的时间段上
+    for ith ID from 1st to nth               
+       for j from 1 to m-1            
+            if 区间(a_j,a_j+1) 在 start 和 end之间
+                then inter(i,j) = TRUE
+                else inter(i,j) = FALSE
+3. 将各ID的分布情况加总得到各区间的重叠情况             
+    res_j = $\Sigma_i$inter(i,j)
+4. 最大重叠数max_number=max{res_j} 和对应的区间(a_j,a_j+1)
+5. 找出在(a_j,a_j+1)上返回TRUE的ID
 
 ```{r}
 
