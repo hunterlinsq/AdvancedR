@@ -30,8 +30,75 @@ ds
 ```
 
 
+
+##关联规则算法(Apriori)
+1.先找出所有两两id的组合，判断其是否重合，提取出其中重叠的集合记为D1
+2.将D1中所有只有最后一个id不同的两两组合再取并集，判断新的组合是否重叠，提取出其中重叠的集合记为D2；
+3.重复以上过程，知道新的并集Dk+1都不是重叠的，则最大重叠id即为Dk
+
+```{r}
+#除了最后一位数均相同的集合取并集
+unionset <- function(a,b){
+        n <- length(a)
+        if(all(a[-n]==b[-n]) & a[n]!=b[n]){
+                return(union(a,b))
+        }
+}
+
+#判断并集是否是重叠
+over_union <- function(union_set,data){
+        ifelse(max(data[union_set,"start"])<min(data[union_set,"end"]),TRUE,FALSE)
+}
+
+overlap4 <- function(asset,data){
+        d_a <- data[data$anest==asset,]
+        d_a$start<- as.POSIXct(d_a$start,format="%H:%M")
+        d_a$end<- as.POSIXct(d_a$end,format="%H:%M")
+        
+        index <- matrix(1:nrow(d_a))   #索引
+        k=2
+        while(nrow(index)!=0){
+                res <- index
+                m <- nrow(res)
+                index_index <- combn(m,2)
+                inter1 <- matrix(NA,nrow = ncol(index_index),ncol = k+1)
+                for(i in 1:ncol(index_index)){
+                        a=index[index_index[,i],,drop=F][1,]
+                        b=index[index_index[,i],,drop=F][2,]
+                        set <- unionset(a,b)
+                        if(!is.null(set)){
+                                inter1[i,] <- c(set,over_union(set,d_a))
+                        }
+                }
+                inter1 <- na.omit(inter1)
+                j <- ncol(inter1)
+                index <- inter1[which(inter1[,j]==1),-j]
+                k=k+1
+        }
+        #return(list(times=ncol(res),res=d_a[res,"id"]))
+        result <- list("max_number"=NA,"id"=list())
+        result$max_number <- ncol(res)
+        for(i in 1:nrow(res)){result$id[[i]] <- d_a[res[i,],"id"]}
+        result
+}
+
+overlap4(asset = "dow",data = ds)
+microbenchmark::microbenchmark(overlap4(asset = "dow",data = ds),times = 1000L)
+
+#Unit: milliseconds
+#                               expr      min       lq     mean   median       uq      max neval
+# overlap4(asset = "dow", data = ds) 4.241368 4.322548 4.551901 4.400331 4.538525 11.92174  1000
+```
+目前比第一种思路稍微慢点，但是可以优化的地方还很多
+
+
+
+
 ##solution1
 基本思路：对于某个资产，由于题目的时间是factor，将其start和end合并在一起经过一系列转化成类似区间这样的形式，对于这样得到每一个端点，比如1，再加上0.5，此时1.5代表区间（1，2），看其是否落在每一个id的区间里面(利用dplyr::between),返回TRUE说明该ID经过该时间段，这样如此反复，返回TRUE最多的X+0.5就代表dow在该时间段上出现的次数最多，最后再反过来再找到X+0.5都为TRUE对应的ID们。
+
+
+原始版本：
 ```{r}
 library(data.table)
 overlap <- function(asset,data){
@@ -62,14 +129,14 @@ overlap(asset = "dow",data = ds)
 overlap(asset = "baker",data = ds)
 
 library(microbenchmark)
-microbenchmark(overlap(asset = "dow",data = ds))
+microbenchmark(overlap(asset = "dow",data = ds),times = 1000L)
 
+#Unit: milliseconds
+#                              expr      min       lq     mean   median       uq      max neval
+# overlap(asset = "dow", data = ds) 9.123114 11.79809 12.31091 12.21494 12.60951 22.37734  1000
 
-Rprof("a.out")
-a <- overlap(asset = "dow",data = ds)
-Rprof(NULL)
-summaryRprof("a.out")
 ```
+
 算法：
 1. 将所有时间点放在一起并排序成1,2,...,m
 2. 看上面各个区间(用中值表示)有无落在各ID的时间段上
@@ -83,11 +150,11 @@ summaryRprof("a.out")
 4. 最大重叠数max_number=max{res_j} 和对应的值a+0.5
 5. 找出在a+0.5上返回TRUE的ID
 
-改进版
+
+改进版（直接用data.frame做）
 ```{r}
 overlap_n <- function(asset,data){
         d_a <- data[data$anest==asset,]
-        #d_a <- data[data$anest=="dow",]
         level <- as.numeric(as.factor(c(as.character(d_a$start),
                                         as.character(d_a$end))))  #将时间排序
         d_a$start=level[1:(length(level)/2)]
@@ -109,12 +176,46 @@ overlap_n <- function(asset,data){
         result
 }
 overlap_n(asset = "dow",data = ds)
-microbenchmark(overlap_n(asset = "dow",data = ds))
+microbenchmark::microbenchmark(overlap_n(asset = "dow",data = ds),times = 1000L)
 
+#Unit: milliseconds
+#                                expr      min      lq     mean   median       uq      max neval
+# overlap_n(asset = "dow", data = ds) 3.679906 3.76354 4.018781 3.867564 3.983669 10.15051  1000
 ```
+变快了超级多
 
+
+再稍微优化一下（优化data.frame和结果的创建）
+```{r}
+overlap_n2 <- function(asset,data){
+        d_a <- data[data$anest==asset,]
+        level <- as.numeric(as.factor(c(as.character(d_a$start),
+                                        as.character(d_a$end))))  #将时间排序
+        d_a$start=level[1:(length(level)/2)]
+        d_a$end=level[-c(1:(length(level)/2))] 
+        
+        inter <- data.frame(row.names = d_a$id)
+        for(i in 1:nrow(d_a)){
+                for(j in 1:length(unique(level))){
+                        inter[i,j] <- dplyr::between(j+0.5,d_a$start[i],d_a$end[i])
+                }
+        }
+        
+        max_number <- max(apply(inter,2,sum))
+        res<- inter[,which(apply(inter,2,sum)==max_number)]
+        return(list("max_number"=max_number,"id"=lapply(res,function(x){row.names(res)[x]})))
+}
+overlap_n2(asset = "dow",data = ds)
+microbenchmark::microbenchmark(overlap_n2(asset = "dow",data = ds),times = 1000L)
+
+#Unit: milliseconds
+#                                 expr      min       lq     mean   median      uq      max neval
+# overlap_n2(asset = "dow", data = ds) 3.513014 3.590797 3.787573 3.693688 3.79016 7.521415  1000
+```
+还是有再快一点
 
 ##solution2
+思路跟方法一大同小异
 
 算法：
 1. 将所有时间点放在一起并排序切割成各区间(a_1,a_2),(a_2,a_3),....(a_m-1,a_m)
@@ -159,6 +260,10 @@ overlap2(asset = "dow",data = ds)
 
 microbenchmark(overlap2(asset = "dow",data = ds),times = 1000L)
 
+#Unit: milliseconds
+#                               expr      min       lq     mean   median       uq      max neval
+# overlap2(asset = "dow", data = ds) 10.29022 10.51695 11.00984 10.75993 11.03103 16.65095  1000
+
 Rprof("a.out")
 a <- overlap2(asset = "dow",data = ds)
 Rprof(NULL)
@@ -166,7 +271,7 @@ summaryRprof("a.out")
 
 ```
 
-改进简化版
+改进简化版（还是优化data.frame和结果的创建）
 ```{r}
 overlap2_n <- function(asset,data){
         d_a <- data[data$anest==asset,]
@@ -188,13 +293,18 @@ overlap2_n <- function(asset,data){
 
 
 overlap2_n(asset = "dow",data = ds)
-library(microbenchmark)
-microbenchmark(overlap2_n(asset = "dow",data = ds),times = 1000L)
+
+microbenchmark::microbenchmark(overlap2_n(asset = "dow",data = ds),times = 1000L)
+
+#Unit: milliseconds
+#                                 expr      min       lq     mean   median       uq      max neval
+# overlap2_n(asset = "dow", data = ds) 10.09312 10.28021 10.83258 10.50015 10.79995 17.28868  1000
 ```
+还是比第一种方法慢很多
 
 
 
-泽贤的算法
+##泽贤的算法(遍历算法)
 ```{r}
 solution3 <- function(asset,data){
         d_a <- data[data$anest==asset,]
@@ -218,13 +328,21 @@ solution3 <- function(asset,data){
         }
 }
 solution3(asset = "dow",data = ds)
-microbenchmark(solution3(asset = "dow",data = ds))
+microbenchmark(solution3(asset = "dow",data = ds),times = 1000L)
 
 ```
-改进：用二分法改进
+但是id数量很多时非常耗时
+改进：用二分法或随机抽法改进
 
-##solution4
+##其它思路
 转化位类似00011100
 map:类似lapply，但可以同时传递两个参数
 reduse函数
+
+
+expand,grid(x,y)：对x和y中的元素做一个遍历组合
+
+
+Question：找出一个01矩阵中的最大公约矩阵(各元素全为1的最大矩阵)
+
 
