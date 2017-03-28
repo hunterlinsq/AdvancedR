@@ -32,9 +32,10 @@ ds
 
 
 ##关联规则算法(Apriori)
-1.先找出所有两两id的组合，判断其是否重合，提取出其中重叠的集合记为D1
-2.将D1中所有只有最后一个id不同的两两组合再取并集，判断新的组合是否重叠，提取出其中重叠的集合记为D2；
-3.重复以上过程，知道新的并集Dk+1都不是重叠的，则最大重叠id即为Dk
+
+1.先找出所有两两id的组合，判断其是否重合，提取出其中重叠的集合记为D1                        
+2.将D1中所有只有最后一个id不同的两两组合再取并集，判断新的组合是否重叠，提取出其中重叠的集合记为D2；                   
+3.重复以上过程，知道新的并集Dk+1都不是重叠的，则最大重叠id即为Dk                
 
 ```{r}
 #除了最后一位数均相同的集合取并集
@@ -88,12 +89,11 @@ microbenchmark::microbenchmark(overlap4(asset = "dow",data = ds),times = 1000L)
 #                               expr      min       lq     mean   median       uq      max neval
 # overlap4(asset = "dow", data = ds) 4.241368 4.322548 4.551901 4.400331 4.538525 11.92174  1000
 ```
-目前比第一种思路稍微慢点，但是可以优化的地方还很多
-
 
 
 
 ##solution1
+
 基本思路：对于某个资产，由于题目的时间是factor，将其start和end合并在一起经过一系列转化成类似区间这样的形式，对于这样得到每一个端点，比如1，再加上0.5，此时1.5代表区间（1，2），看其是否落在每一个id的区间里面(利用dplyr::between),返回TRUE说明该ID经过该时间段，这样如此反复，返回TRUE最多的X+0.5就代表dow在该时间段上出现的次数最多，最后再反过来再找到X+0.5都为TRUE对应的ID们。
 
 
@@ -137,17 +137,17 @@ microbenchmark(overlap(asset = "dow",data = ds),times = 1000L)
 ```
 
 算法：
-1. 将所有时间点放在一起并排序成1,2,...,m
-2. 看上面各个区间(用中值表示)有无落在各ID的时间段上
-    for ith ID from 1st to nth               
-       for j from 1 to m            
-            if j+0.5 在 start 和 end之间
-                then inter(i,j) = TRUE
-                else inter(i,j) = FALSE
-3. 将各ID的分布情况加总得到各区间的重叠情况             
-    res_j = $\Sigma_i$inter(i,j)
-4. 最大重叠数max_number=max{res_j} 和对应的值a+0.5
-5. 找出在a+0.5上返回TRUE的ID
+1. 将所有时间点放在一起并排序成1,2,...,m                
+2. 看上面各个区间(用中值表示)有无落在各ID的时间段上             
+    for ith ID from 1st to nth                         
+       for j from 1 to m                            
+            if j+0.5 在 start 和 end之间                
+                then inter(i,j) = TRUE          
+                else inter(i,j) = FALSE         
+3. 将各ID的分布情况加总得到各区间的重叠情况                          
+    res_j = $\Sigma_i$inter(i,j)                
+4. 最大重叠数max_number=max{res_j} 和对应的值a+0.5              
+5. 找出在a+0.5上返回TRUE的ID            
 
 
 改进版（直接用data.frame做）
@@ -214,20 +214,21 @@ microbenchmark::microbenchmark(overlap_n2(asset = "dow",data = ds),times = 1000L
 还是有再快一点
 
 ##solution2
+
 思路跟方法一大同小异
 
 算法：
-1. 将所有时间点放在一起并排序切割成各区间(a_1,a_2),(a_2,a_3),....(a_m-1,a_m)
-2. 看上面各个区间(用中值表示)有无落在各ID的时间段上
-    for ith ID from 1st to nth               
-       for j from 1 to m-1            
-            if 区间(a_j,a_j+1) 在 start 和 end之间
-                then inter(i,j) = TRUE
-                else inter(i,j) = FALSE
-3. 将各ID的分布情况加总得到各区间的重叠情况             
-    res_j = $\Sigma_i$inter(i,j)
-4. 最大重叠数max_number=max{res_j} 和对应的区间(a_j,a_j+1)
-5. 找出在(a_j,a_j+1)上返回TRUE的ID
+1. 将所有时间点放在一起并排序切割成各区间(a_1,a_2),(a_2,a_3),....(a_m-1,a_m)            
+2. 看上面各个区间(用中值表示)有无落在各ID的时间段上             
+    for ith ID from 1st to nth                         
+       for j from 1 to m-1                          
+            if 区间(a_j,a_j+1) 在 start 和 end之间              
+                then inter(i,j) = TRUE          
+                else inter(i,j) = FALSE         
+3. 将各ID的分布情况加总得到各区间的重叠情况                          
+    res_j = $\Sigma_i$inter(i,j)                
+4. 最大重叠数max_number=max{res_j} 和对应的区间(a_j,a_j+1)              
+5. 找出在(a_j,a_j+1)上返回TRUE的ID              
 
 ```{r}
 
@@ -271,6 +272,7 @@ summaryRprof("a.out")
 ```
 
 改进简化版（还是优化data.frame和结果的创建）
+
 ```{r}
 overlap2_n <- function(asset,data){
         d_a <- data[data$anest==asset,]
@@ -304,6 +306,7 @@ microbenchmark::microbenchmark(overlap2_n(asset = "dow",data = ds),times = 1000L
 
 
 ##泽贤的算法(遍历算法)
+
 ```{r}
 solution3 <- function(asset,data){
         d_a <- data[data$anest==asset,]
@@ -330,14 +333,17 @@ solution3(asset = "dow",data = ds)
 microbenchmark(solution3(asset = "dow",data = ds),times = 1000L)
 
 ```
-但是id数量很多时非常耗时
+但是id数量很多时非常耗时                
 改进：用二分法或随机抽法改进
 
 ##其它思路
-转化位类似00011100
-map:类似lapply，但可以同时传递两个参数
-reduse函数
 
+转化位类似00011100
+
+
+map:类似lapply，但可以同时传递两个参数 
+
+reduse函数 
 
 expand,grid(x,y)：对x和y中的元素做一个遍历组合
 
