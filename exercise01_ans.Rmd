@@ -55,29 +55,28 @@ overlap4 <- function(asset,data){
         d_a$start<- as.POSIXct(d_a$start,format="%H:%M")
         d_a$end<- as.POSIXct(d_a$end,format="%H:%M")
         
-        index <- matrix(1:nrow(d_a))   #索引
-        k=2
+        index <- matrix(1:nrow(d_a))   #索引,重叠集D1的位置集合
+        k=1                            #更新数
         while(nrow(index)!=0){
                 res <- index
-                m <- nrow(res)
-                index_index <- combn(m,2)
-                inter1 <- matrix(NA,nrow = ncol(index_index),ncol = k+1)
+                m <- nrow(index)
+                index_index <- combn(m,2)  
+                inter <- matrix(NA,nrow = ncol(index_index),ncol = k+2) #重叠情况 
                 for(i in 1:ncol(index_index)){
                         a=index[index_index[,i],,drop=F][1,]
-                        b=index[index_index[,i],,drop=F][2,]
-                        set <- unionset(a,b)
+                        b=index[index_index[,i],,drop=F][2,]         #从Dk中抽取的两个集合
+                        set <- unionset(a,b)             #除了最后一位数均相同的集合取并集
                         if(!is.null(set)){
-                                inter1[i,] <- c(set,over_union(set,d_a))
+                                inter[i,] <- c(set,over_union(set,d_a))
                         }
                 }
-                inter1 <- na.omit(inter1)
-                j <- ncol(inter1)
-                index <- inter1[which(inter1[,j]==1),-j]
+                inter <- na.omit(inter)
+                index <- inter[which(inter[,ncol(inter)]==1),-ncol(inter)]  #更新Dk+1的索引
                 k=k+1
         }
-        #return(list(times=ncol(res),res=d_a[res,"id"]))
+
         result <- list("max_number"=NA,"id"=list())
-        result$max_number <- ncol(res)
+        result$max_number <- k-1
         for(i in 1:nrow(res)){result$id[[i]] <- d_a[res[i,],"id"]}
         result
 }
