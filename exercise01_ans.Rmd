@@ -330,7 +330,11 @@ solution3 <- function(asset,data){
         }
 }
 solution3(asset = "dow",data = ds)
-microbenchmark(solution3(asset = "dow",data = ds),times = 1000L)
+microbenchmark::microbenchmark(solution3(asset = "dow",data = ds),times = 1000L)
+
+#Unit: milliseconds
+#                                expr      min      lq    mean   median       uq      max neval
+# solution3(asset = "dow", data = ds) 10.00023 10.4892 11.1107 10.77069 11.20132 91.82658  1000
 
 ```
 但是id数量很多时非常耗时                
