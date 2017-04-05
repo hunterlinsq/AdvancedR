@@ -83,7 +83,7 @@ overlap4 <- function(asset,data){
 }
 
 overlap4(asset = "dow",data = ds)
-microbenchmark::microbenchmark(overlap4(asset = "dow",data = ds),times = 1000L)
+microbenchmark::microbenchmark(overlap4(asset = "dow",data = ds))
 
 #Unit: milliseconds
 #                               expr      min       lq     mean   median       uq      max neval
@@ -258,7 +258,7 @@ overlap2 <- function(asset,data){
 
 overlap2(asset = "dow",data = ds)
 
-microbenchmark(overlap2(asset = "dow",data = ds),times = 1000L)
+microbenchmark::microbenchmark(overlap2(asset = "dow",data = ds))
 
 #Unit: milliseconds
 #                               expr      min       lq     mean   median       uq      max neval
@@ -353,5 +353,7 @@ expand,grid(x,y)：对x和y中的元素做一个遍历组合
 
 
 Question：找出一个01矩阵中的最大公约矩阵(各元素全为1的最大矩阵)
+自己写代码实现combn()
+
 
 

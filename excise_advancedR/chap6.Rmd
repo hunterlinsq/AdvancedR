@@ -74,7 +74,7 @@ ans：on.exist()函数，其中的代码是在清理前都会执行的。
 
 1.使用什么函数来判断一个对象是不是函数？使用什么函数来判断一个函数是不是原函数？
 
-ans:用is.function()来判断是否是函数，
+ans:用is.function()来判断是否是函数，用is.primitive()判断是不是原函数。
 
 2.下面的代码可以列出基础包中的所有函数。
 ```{r}
@@ -83,13 +83,20 @@ funs <- Filter(is.function,objs)
 ```
 使用它来回答下面的问题：                
 a.哪个基础函数有最多的参数?              
-b.多少个基础函数美哟u函数？这些函数有哪些特别之处？             
+b.多少个基础函数没有函数？这些函数有哪些特别之处？             
 c.如何对这段代码进行修改以便找到所有的原函数？
 
 ```{r}
-form <- lapply(funs,formals)
-numbers <- lapply(form,length)
-max(unlist(numbers))
+#(a)
+fun_args <- sapply(funs,function(x){length(formals(x))})
+fun_args[which.max(fun_args)]
+#(b)
+sum(fun_args==0)
+sum(sapply(funs,function(x){is.null(formals(x)) | length(formals(x))==0}))
+sum(sapply(funs,function(x){is.null(formals(x))}))
+sum(sapply(funs,function(x){is.primitive(x)}))
+#(c)
+prim <- Filter(is.primitive,objs)
 
 ```
 
@@ -100,5 +107,10 @@ ans：body:函数的内部代码；formals():控制如何调用函数的参数�
    
 
 4.什么时候输出一个函数不会显示创建它所在的环境？
+
+*当它是在全局环境中被创建的时候。*
+
+
+
 
 
